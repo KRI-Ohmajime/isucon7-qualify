@@ -730,7 +730,15 @@ func main() {
 		templates: template.Must(template.New("").Funcs(funcs).ParseGlob("views/*.html")),
 	}
 	e.Use(session.Middleware(sessions.NewCookieStore([]byte("secretonymoris"))))
+
+	// 出力先をファイルに変更
+	fp, err := os.OpenFile("/var/log/golang/application.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+  	if err != nil {
+    	panic(err)
+	}
+	  
 	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
+		Output: fp,
 		Format: "request:\"${method} ${uri}\" status:${status} latency:${latency} (${latency_human}) bytes:${bytes_out}\n",
 	}))
 	e.Use(middleware.Static("../public"))
