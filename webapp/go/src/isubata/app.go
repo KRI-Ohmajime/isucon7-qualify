@@ -737,17 +737,17 @@ func main() {
 		panic(err)
 	}
 
-	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
-		Output: accessLogFilePath,
-		Format: "request:\"${method} ${uri}\" status:${status} latency:${latency} (${latency_human}) bytes:${bytes_out}\n",
-	}))
+	// e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
+	// 	Output: accessLogFilePath,
+	// 	Format: "request:\"${method} ${uri}\" status:${status} latency:${latency} (${latency_human}) bytes:${bytes_out}\n",
+	// }))
 
 	// // エラーログの出力先をファイルに変更
 	// errorLogFilePath, err := os.OpenFile("/var/log/golang/error.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
 		panic(err)
 	}
-	e.Logger.SetOutput(errorLogFilePath)
+	// e.Logger.SetOutput(errorLogFilePath)
 
 	e.Use(middleware.Static("../public"))
 
