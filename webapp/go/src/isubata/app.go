@@ -730,9 +730,25 @@ func main() {
 		templates: template.Must(template.New("").Funcs(funcs).ParseGlob("views/*.html")),
 	}
 	e.Use(session.Middleware(sessions.NewCookieStore([]byte("secretonymoris"))))
+
+	// リクエストログの出力先をファイルに変更
+	accessLogFilePath, err := os.OpenFile("/var/log/golang/access.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+  	if err != nil {
+		panic(err)
+	}
+
 	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
+		Output: accessLogFilePath,
 		Format: "request:\"${method} ${uri}\" status:${status} latency:${latency} (${latency_human}) bytes:${bytes_out}\n",
 	}))
+
+	// エラーログの出力先をファイルに変更
+	errorLogFilePath, err := os.OpenFile("/var/log/golang/error.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		panic(err)
+	}
+	e.Logger.SetOutput(errorLogFilePath)
+
 	e.Use(middleware.Static("../public"))
 
 	e.GET("/initialize", getInitialize)
