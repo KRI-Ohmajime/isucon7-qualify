@@ -733,9 +733,9 @@ func main() {
 
 	// // リクエストログの出力先をファイルに変更
 	// accessLogFilePath, err := os.OpenFile("/var/log/golang/access.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-  	if err != nil {
-		panic(err)
-	}
+  	// if err != nil {
+	// 	panic(err)
+	// }
 
 	// e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
 	// 	Output: accessLogFilePath,
@@ -744,9 +744,9 @@ func main() {
 
 	// // エラーログの出力先をファイルに変更
 	// errorLogFilePath, err := os.OpenFile("/var/log/golang/error.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-	if err != nil {
-		panic(err)
-	}
+	// if err != nil {
+	// 	panic(err)
+	// }
 	// e.Logger.SetOutput(errorLogFilePath)
 
 	e.Use(middleware.Static("../public"))
