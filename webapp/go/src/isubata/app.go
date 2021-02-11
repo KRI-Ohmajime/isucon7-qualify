@@ -416,17 +416,14 @@ func queryChannels() ([]int64, error) {
 }
 
 type HaveRead struct {
-	UserID    int64     `db:"user_id"`
-	ChannelID int64     `db:"channel_id"`
-	MessageID int64     `db:"message_id"`
-	UpdatedAt time.Time `db:"updated_at"`
-	CreatedAt time.Time `db:"created_at"`
+	ChannelID sql.NullInt64     `db:"channel_id"`
+	MessageID sql.NullInt64     `db:"message_id"`
 }
 
 func queryHaveRead(userID int64) ([]HaveRead, error) {
 	h := []HaveRead{}
 
-	err := db.Select(&h, "SELECT * FROM haveread WHERE user_id = ?",
+	err := db.Select(&h, "SELECT h.channel_id, h.message_id FROM channel c LEFT OUTER JOIN (SELECT channel_id, message_id from haveread where user_id = ?) h ON c.id = h.channel_id;",
 		userID)
 
 	if err == sql.ErrNoRows {
@@ -455,7 +452,7 @@ func fetchUnread(c echo.Context) error {
 	
 	for _, hr := range hrs {
 		var cnt int64
-		if hr.MessageID > 0 {
+		if hr.MessageID.Valid == true {
 			err = db.Get(&cnt,
 				"SELECT COUNT(*) as cnt FROM message WHERE channel_id = ? AND ? < id",
 				hr.ChannelID, hr.MessageID)
