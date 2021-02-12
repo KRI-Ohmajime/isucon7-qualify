@@ -416,7 +416,7 @@ func queryChannels() ([]int64, error) {
 }
 
 type HaveRead struct {
-	ChannelID string     `db:"id"`
+	ChannelID int64     `db:"id"`
 	MessageID sql.NullInt64     `db:"message_id"`
 }
 
@@ -437,7 +437,7 @@ func queryHaveRead(userID int64) ([]HaveRead, error) {
 func fetchUnread(c echo.Context) error {
 
 	type Result struct{
-		ChannelID string
+		ChannelID int64
 		Unread int64
 		Error error
 	}
