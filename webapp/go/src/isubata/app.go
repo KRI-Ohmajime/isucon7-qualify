@@ -465,7 +465,7 @@ func fetchUnread(c echo.Context) error {
 			if hr.MessageID.Valid == true {
 				err = db.Get(&cnt,
 					"SELECT COUNT(*) as cnt FROM message WHERE channel_id = ? AND ? < id",
-					hr.ChannelID, hr.MessageID)
+					hr.ChannelID, hr.MessageID.Int64)
 			} else {
 				err = db.Get(&cnt,
 					"SELECT COUNT(*) as cnt FROM message WHERE channel_id = ?",
