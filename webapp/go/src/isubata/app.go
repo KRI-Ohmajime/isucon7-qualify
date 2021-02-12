@@ -416,14 +416,14 @@ func queryChannels() ([]int64, error) {
 }
 
 type HaveRead struct {
-	ChannelID sql.NullInt64     `db:"channel_id"`
+	ChannelID string     `db:"id"`
 	MessageID sql.NullInt64     `db:"message_id"`
 }
 
 func queryHaveRead(userID int64) ([]HaveRead, error) {
 	h := []HaveRead{}
 
-	err := db.Select(&h, "SELECT h.channel_id, h.message_id FROM channel c LEFT OUTER JOIN (SELECT channel_id, message_id from haveread where user_id = ?) h ON c.id = h.channel_id;",
+	err := db.Select(&h, "SELECT c.id, h.message_id FROM channel c LEFT OUTER JOIN (SELECT channel_id, message_id from haveread where user_id = ?) h ON c.id = h.channel_id;",
 		userID)
 
 	if err == sql.ErrNoRows {
@@ -435,6 +435,12 @@ func queryHaveRead(userID int64) ([]HaveRead, error) {
 }
 
 func fetchUnread(c echo.Context) error {
+
+	type Result struct{
+		ChannelID string
+		Unread int64
+		Error error
+	}
 
 	userID := sessUserID(c)
 	if userID == 0 {
@@ -450,25 +456,44 @@ func fetchUnread(c echo.Context) error {
 		return err
 	}
 	
+	channel := make(chan Result)
+
 	for _, hr := range hrs {
-		var cnt int64
-		if hr.MessageID.Valid == true {
-			err = db.Get(&cnt,
-				"SELECT COUNT(*) as cnt FROM message WHERE channel_id = ? AND ? < id",
-				hr.ChannelID, hr.MessageID)
-		} else {
-			err = db.Get(&cnt,
-				"SELECT COUNT(*) as cnt FROM message WHERE channel_id = ?",
-				hr.ChannelID)
-		}
-		if err != nil {
+
+		go func(hr HaveRead) {
+			var cnt int64
+			if hr.MessageID.Valid == true {
+				err = db.Get(&cnt,
+					"SELECT COUNT(*) as cnt FROM message WHERE channel_id = ? AND ? < id",
+					hr.ChannelID, hr.MessageID)
+			} else {
+				err = db.Get(&cnt,
+					"SELECT COUNT(*) as cnt FROM message WHERE channel_id = ?",
+					hr.ChannelID)
+			}
+			if err != nil {
+				channel <- Result{Error: err}
+			}
+			
+			channel <- Result{ChannelID: hr.ChannelID, Unread: cnt}
+		}(hr)
+		
+	}
+
+	for i := 0 ; i < len(hrs); i++ {
+		result := <- channel
+
+		if (err != nil) {
 			return err
 		}
+
 		r := map[string]interface{}{
-			"channel_id": hr.ChannelID,
-			"unread":     cnt}
+			"channel_id": result.ChannelID,
+			"unread":     result.Unread}
 		resp = append(resp, r)
 	}
+
+
 
 	return c.JSON(http.StatusOK, resp)
 }
